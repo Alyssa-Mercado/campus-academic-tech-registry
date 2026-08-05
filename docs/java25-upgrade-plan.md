@@ -1,7 +1,8 @@
-# Java 25 & Spring Boot Upgrade Plan
+# Java 25 & Spring Boot Upgrade Plan — Manual Effort
 
-> **Current:** Java 21 / Spring Boot 3.2.5  
+> **Current:** Java 21 / Spring Boot 3.2.5
 > **Target:** Java 25 / Spring Boot 3.5.x
+> **Estimated total time: ~40 minutes** (required + recommended changes)
 
 ---
 
