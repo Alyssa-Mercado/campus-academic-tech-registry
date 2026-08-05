@@ -1,7 +1,7 @@
 # Demo Script — Campus Academic Technology Registry
 
-> **Audience:** Technical reviewers, stakeholders, or interviewers  
-> **Duration:** ~15 minutes (Part 1: 8 min · Part 2: 7 min)  
+> **Audience:** Technical reviewers, stakeholders, or interviewers
+> **Duration:** ~25 minutes (Part 1: 8 min · Part 2: 7 min · Part 3: 10 min)
 > **Prerequisites:** Java 21+, Maven 3, browser open at `http://localhost:8080`
 
 ---
@@ -316,6 +316,153 @@ Every HTTP request is now dispatched on a virtual thread. For an I/O-bound appli
 3. **Already modern** — the codebase doesn't use any deprecated APIs from Java 9–21. There's nothing to un-migrate.
 
 Total lines changed across all five phases: **~30 lines** across 6 files.
+
+---
+
+## Part 3 — How IBM Bob Accelerated This Project
+
+> _"This entire project — from the initial application build through to the Java 25 upgrade plan and this demo script — was developed collaboratively with IBM Bob, an AI software engineer embedded directly in the IDE. Here's what that looked like at each stage of the SDLC."_
+
+---
+
+### 3.1 — Requirements & Design
+
+**What Bob did:**
+Before a single line of code was written, Bob was used to reason through the domain model. Questions like _"what fields should an Asset have?", "how should warranty status work — stored or computed?", "what does a replacement rule engine look like?"_ were answered through a collaborative back-and-forth that produced the final architecture in minutes rather than hours.
+
+**SDLC stage:** Requirements → Architecture
+**Time saved:** Eliminated a whiteboard-to-spec translation step. The design decisions (computed `@Transient` fields, externalised thresholds in `@ConfigurationProperties`, lazy overdue sync) were reasoned through and justified before implementation began.
+
+**Example exchange:**
+> _"Should WarrantyStatus be a stored column or computed at runtime?"_
+> Bob: _"Computed — storing it creates a drift risk. A `@Transient` method on the entity derives it from `warrantyExpiryDate` every time, so it's always accurate with no sync job needed."_
+
+---
+
+### 3.2 — Application Build
+
+**What Bob did:**
+Bob generated the full application skeleton — all 14 source files — with production-quality code on the first pass:
+
+| File | What Bob produced |
+|---|---|
+| [`Asset.java`](../src/main/java/com/university/assettracker/domain/Asset.java) | JPA entity with hand-rolled Builder, computed `@Transient` methods, pattern-matching `equals()` |
+| [`MaintenanceEvent.java`](../src/main/java/com/university/assettracker/domain/MaintenanceEvent.java) | JPA entity with lazy-fetch `@ManyToOne`, Builder pattern |
+| [`ReplacementRecommendation.java`](../src/main/java/com/university/assettracker/domain/ReplacementRecommendation.java) | Immutable value object with defensive copy in constructor |
+| [`ReplacementRuleConfig.java`](../src/main/java/com/university/assettracker/config/ReplacementRuleConfig.java) | `@ConfigurationProperties` binding — thresholds externalised, not hard-coded |
+| [`ReplacementService.java`](../src/main/java/com/university/assettracker/service/ReplacementService.java) | Two-rule engine with severity ranking |
+| [`MaintenanceService.java`](../src/main/java/com/university/assettracker/service/MaintenanceService.java) | Lazy overdue sync — no scheduled job, transitions happen on read |
+| [`DataSeeder.java`](../src/main/java/com/university/assettracker/config/DataSeeder.java) | 25 assets + 35 maintenance events seeded to exercise every code path and UI state |
+| All controllers | Thin MVC controllers — logic lives in services, not handlers |
+
+**SDLC stage:** Implementation
+**Time saved:** A Spring Boot application of this scope typically takes 2–3 days to scaffold and wire correctly. With Bob, the full working application — including the seeded dataset, both database profiles, and all Thymeleaf templates — was produced in a single session.
+
+**Key quality decisions Bob enforced without being asked:**
+- Constructor injection everywhere — no `@Autowired` field injection
+- No JPQL written by hand — Spring Data derived query methods throughout
+- No business logic in controllers — all routed to service layer
+- `application-dev.properties` for PostgreSQL kept separate from the default H2 profile
+- Bootstrap 5 bundled locally — no CDN dependency, works offline
+
+---
+
+### 3.3 — Code Review & Reasoning
+
+**What Bob did:**
+At any point during development, Bob could be asked to explain, critique, or improve a specific piece of code. This served as an always-available code reviewer that understood the full context of the project.
+
+**Example interactions:**
+
+> _"Why does `syncAndSaveOverdue()` run on every `findAll()` call instead of using a `@Scheduled` job?"_
+> Bob explained the tradeoff: a scheduled job requires a separate thread, a cron expression, and careful handling of the H2 vs PostgreSQL profiles. The lazy approach is simpler, has no timing gap, and is appropriate for a low-traffic admin tool.
+
+> _"Is there a risk that `DataSeeder` runs twice?"_
+> Bob pointed to the `if (assetRepository.count() != 0) return;` guard at the top of `run()` — idempotent by design.
+
+> _"Should `ReplacementRecommendation` be an entity?"_
+> Bob: _"No — it's a computed view over assets and maintenance events. Making it an entity would mean persisting derived data, which creates a consistency problem. It should stay a transient value object."_
+
+**SDLC stage:** Code Review / Knowledge Transfer
+**Time saved:** Eliminated the need for a senior reviewer to be available synchronously. Every architectural decision is documented, justified, and queryable.
+
+---
+
+### 3.4 — Testing & Validation
+
+**What Bob did:**
+Bob reasoned through which test scenarios the seed data needed to cover and designed the 25-asset / 35-event dataset to exercise every distinct code path:
+
+| Scenario | Assets seeded |
+|---|---|
+| Rule 1 only (age > threshold) | Projector 8 yr old, Smartboard 9 yr old |
+| Rule 2 only (expired warranty + overdue maintenance) | HP EliteDesk, Logitech Camera, Shure Microphone |
+| Both rules → HIGH severity | Dell OptiPlex 7060 (6 yr old PC, expired warranty, overdue event) |
+| Warranty: Active | 8 assets with expiry > today + 90 days |
+| Warranty: Expiring Soon | 6 assets with expiry within 90 days |
+| Warranty: Expired | 12 assets with past expiry dates |
+| Maintenance: Completed | 11 events |
+| Maintenance: Scheduled (upcoming) | 10 future events |
+| Maintenance: Overdue | 14 events with past scheduled dates |
+
+Every dashboard counter, every filter view, and every recommendation badge has a specific asset backing it — nothing is left to chance.
+
+**SDLC stage:** Test Design / QA
+**Time saved:** Designing a representative dataset manually is tedious and error-prone. Bob computed the exact counts needed, cross-checked the warranty status tally, and ensured the seeder is deterministic (relative dates like `today.minusYears(6)` so tests never go stale).
+
+---
+
+### 3.5 — Documentation
+
+**What Bob did:**
+All project documentation was generated by Bob with full knowledge of the actual codebase — not generic boilerplate:
+
+| Document | What it covers |
+|---|---|
+| [`README.md`](../README.md) | Tech stack, running locally, PostgreSQL dev profile, project structure, replacement rules |
+| [`docs/java25-upgrade-plan.md`](java25-upgrade-plan.md) | 5-phase upgrade plan with file-level diffs, risk register, effort estimates |
+| [`docs/demo-script.md`](demo-script.md) | This document — app walkthrough, modernization narrative, Bob's SDLC contribution |
+| [`requests.http`](../requests.http) | Full HTTP request file for every endpoint, compatible with IntelliJ and VS Code REST Client |
+
+Every code reference in the docs links to the exact file and method. Every diff shows the actual before/after for this codebase — not a hypothetical.
+
+**SDLC stage:** Documentation
+**Time saved:** Documentation is typically written last and often skipped. With Bob, it's produced alongside the code and stays accurate because Bob reads the source before writing anything.
+
+---
+
+### 3.6 — Upgrade Planning & Modernization
+
+**What Bob did:**
+Given the existing codebase, Bob was asked: _"What would a Java 25 and Spring Boot upgrade look like?"_ Rather than producing a generic migration guide, Bob:
+
+1. **Read every source file** before making any claims
+2. **Identified the exact constraints** — JPA entities can't be records; Lombok isn't actually used; pattern matching is already in use
+3. **Produced file-level diffs** for each of the 6 files that change
+4. **Assessed risk per change** — flagged the Thymeleaf/record accessor edge case, confirmed zero Lombok risk, identified virtual threads as a free win
+5. **Estimated effort accurately** — ~40 minutes total, broken down per phase
+
+This is the difference between a generic _"upgrade to Java 25"_ checklist and an upgrade plan specific to this project's constraints.
+
+**SDLC stage:** Technical Debt / Modernization Planning
+**Time saved:** A senior engineer would typically need to audit the full codebase before producing a credible upgrade plan. Bob did that audit in seconds and produced the plan with source-referenced justifications.
+
+---
+
+### 3.7 — The SDLC Summary
+
+> _"Bob wasn't used as an autocomplete tool. It was used as a collaborative engineering partner across the full development lifecycle."_
+
+| SDLC Stage | Bob's Contribution | Traditional Alternative |
+|---|---|---|
+| Requirements & Design | Reasoned through domain model tradeoffs in real-time | Whiteboard sessions, architecture docs written after the fact |
+| Implementation | Generated production-quality code for all 14 source files | 2–3 days of scaffolding and wiring |
+| Code Review | Explained every design decision on demand, full project context | Synchronous senior reviewer availability |
+| Test Design | Designed the seed dataset to cover every code path and UI state | Manual QA planning, often incomplete |
+| Documentation | Generated accurate, source-linked docs alongside the code | Written last, often skipped or generic |
+| Modernization Planning | Produced a source-specific upgrade plan with file-level diffs and risk assessment | Senior engineer audit + separate doc effort |
+
+> _"The result is a codebase where every decision is intentional, every component is justified, and the path forward — to Java 25, to production, to new features — is clearly documented. That's what AI-assisted development with Bob looks like end to end."_
 
 ---
 
