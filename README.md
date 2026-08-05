@@ -1,6 +1,19 @@
 # 🎓 Classroom Asset Tracker
 
+[![CI](https://github.com/Alyssa-Mercado/classroom-asset-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Alyssa-Mercado/classroom-asset-tracker/actions/workflows/ci.yml)
+
 A Spring Boot web application for managing classroom technology assets across university buildings.
+
+## Screenshots
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Asset List
+![Assets](docs/screenshots/assets.png)
+
+### Replacement Recommendations
+![Recommendations](docs/screenshots/recommendations.png)
 
 ## Features
 
@@ -34,6 +47,27 @@ Then open [http://localhost:8080](http://localhost:8080) in your browser.
 
 > The database is in-memory — it resets on every restart and is automatically seeded with 25 sample assets and 35 maintenance events.
 
+## Using PostgreSQL (Dev Profile)
+
+To run against a real PostgreSQL database instead of H2:
+
+1. Create a database: `CREATE DATABASE assetdb;`
+2. Set environment variables (or edit [`application-dev.properties`](src/main/resources/application-dev.properties) directly):
+   ```bash
+   export DB_USERNAME=postgres
+   export DB_PASSWORD=yourpassword
+   ```
+3. Run with the dev profile:
+   ```bash
+   mvn spring-boot:run -Dspring-boot.run.profiles=dev
+   ```
+
+## Testing Endpoints
+
+An [`requests.http`](requests.http) file is included, compatible with:
+- **IntelliJ IDEA** — built-in HTTP Client
+- **VS Code** — [REST Client extension](https://marketplace.visualstudio.com/items?itemName=humao.rest-client)
+
 ## Project Structure
 
 ```
@@ -46,7 +80,8 @@ src/main/java/com/university/assettracker/
 src/main/resources/
 ├── templates/      # Thymeleaf HTML templates
 ├── static/         # Bootstrap CSS/JS (bundled locally)
-└── application.properties
+├── application.properties          # Default profile (H2)
+└── application-dev.properties      # Dev profile (PostgreSQL)
 ```
 
 ## Replacement Rules

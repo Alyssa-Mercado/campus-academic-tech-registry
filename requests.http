@@ -1,0 +1,97 @@
+### Classroom Asset Tracker — HTTP Requests
+### Compatible with IntelliJ HTTP Client, VS Code REST Client extension
+### Base URL: http://localhost:8080
+
+@baseUrl = http://localhost:8080
+
+# ============================================================
+# DASHBOARD
+# ============================================================
+
+### Get dashboard
+GET {{baseUrl}}/
+
+# ============================================================
+# ASSETS
+# ============================================================
+
+### List all assets
+GET {{baseUrl}}/assets
+
+### List assets filtered by type
+GET {{baseUrl}}/assets?type=CLASSROOM_PC
+
+### Search assets by name or building
+GET {{baseUrl}}/assets?search=Science
+
+### Filter and search combined
+GET {{baseUrl}}/assets?type=PROJECTOR&search=Hall
+
+### View asset detail (replace 1 with a real asset ID)
+GET {{baseUrl}}/assets/1
+
+### New asset form
+GET {{baseUrl}}/assets/new
+
+### Edit asset form (replace 1 with a real asset ID)
+GET {{baseUrl}}/assets/1/edit
+
+### Save new asset (POST form submission)
+POST {{baseUrl}}/assets/save
+Content-Type: application/x-www-form-urlencoded
+
+name=Test+Projector&assetType=PROJECTOR&serialNumber=SN-TEST-001&building=Test+Hall&roomNumber=Room+999&purchaseDate=2022-01-01&warrantyExpiryDate=2027-01-01&notes=Test+asset
+
+### Delete asset (replace 1 with a real asset ID)
+POST {{baseUrl}}/assets/1/delete
+
+# ============================================================
+# MAINTENANCE
+# ============================================================
+
+### List all maintenance events
+GET {{baseUrl}}/maintenance
+
+### Filter — upcoming (next 30 days)
+GET {{baseUrl}}/maintenance?filter=upcoming
+
+### Filter — overdue
+GET {{baseUrl}}/maintenance?filter=overdue
+
+### New maintenance event form
+GET {{baseUrl}}/maintenance/new
+
+### New maintenance event pre-filled for a specific asset (replace 1 with asset ID)
+GET {{baseUrl}}/maintenance/new?assetId=1
+
+### Edit maintenance event form (replace 1 with event ID)
+GET {{baseUrl}}/maintenance/1/edit
+
+### Save new maintenance event
+POST {{baseUrl}}/maintenance/save
+Content-Type: application/x-www-form-urlencoded
+
+assetId=1&status=SCHEDULED&scheduledDate=2026-09-01&completedDate=&description=Annual+hardware+inspection
+
+### Mark maintenance event as complete (replace 1 with event ID)
+POST {{baseUrl}}/maintenance/1/complete
+
+### Delete maintenance event (replace 1 with event ID)
+POST {{baseUrl}}/maintenance/1/delete
+
+# ============================================================
+# REPLACEMENT RECOMMENDATIONS
+# ============================================================
+
+### List all replacement recommendations
+GET {{baseUrl}}/recommendations
+
+# ============================================================
+# H2 DATABASE CONSOLE (default profile only)
+# ============================================================
+
+### Open H2 console (use in browser — not an API endpoint)
+### URL:      http://localhost:8080/h2-console
+### JDBC URL: jdbc:h2:mem:assetdb
+### Username: sa
+### Password: (leave blank)
