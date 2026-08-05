@@ -130,192 +130,220 @@ Point out:
 
 ---
 
-## Part 2 — Java 25 Modernization Walkthrough
+## Part 2 — Java 25 Modernization with Bob's Workflow
 
-> _"Now let's walk through what a Java 25 + Spring Boot 3.5 upgrade looks like for this exact codebase — and why it's low-risk."_
+> _"Now let's walk through how Bob's modernization workflow — Ask mode to explore, Plan mode to design, Agent mode to implement — applies to upgrading this project from Java 21 / Spring Boot 3.2.5 to Java 25 / Spring Boot 3.5."_
 
-See the full plan at [`docs/java25-upgrade-plan.md`](java25-upgrade-plan.md).
+Bob's modernization pattern follows three distinct phases that mirror the mode structure: **explore safely first, plan deliberately, then implement with approval at every step.** Here's exactly what each mode interaction looks like for this codebase.
 
----
-
-### 2.1 — Toolchain Bump (Phase 1) — 5 minutes of work
-
-> _"The single biggest change is two version numbers."_
-
-**`pom.xml` — before:**
-```xml
-<parent>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.5</version>
-</parent>
-<properties>
-    <java.version>21</java.version>
-</properties>
-```
-
-**`pom.xml` — after:**
-```xml
-<parent>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.0</version>
-</parent>
-<properties>
-    <java.version>25</java.version>
-</properties>
-```
-
-Spring Boot 3.3 / 3.4 / 3.5 have **no breaking changes** in the JPA, Thymeleaf, or Web MVC layers this app uses. `mvn verify` passes green after the bump.
+See the full output of this process at [`docs/java25-upgrade-plan.md`](java25-upgrade-plan.md).
 
 ---
 
-### 2.2 — Drop Lombok (Phase 2) — zero risk here
+### 2.1 — Step 1: Explore with Ask Mode
 
-> _"Lombok is already declared `<optional>` in the POM, and there is not a single `@Data`, `@Builder`, or `@Getter` annotation anywhere in the source tree. The entities already have hand-rolled builders. Removing Lombok is a no-op deletion."_
+> _"Before touching a single file, switch Bob to Ask mode — `/ask` in the chat or the mode selector. Ask mode is read-only. It cannot modify files. This is the safe exploration phase."_
 
-Show the `pom.xml` Lombok block that gets removed — nothing in `src/` references it.
+**Why Ask mode first:** Bob explores the codebase, reading files, following patterns, and analysing code. You understand what needs to change before anything changes.
+
+**Prompt 1 — Analyse the build file:**
+```text
+@pom.xml What Java version and Spring Boot version is this project on?
+What would need to change to upgrade to Java 25 and Spring Boot 3.5?
+Give me a short summary.
+```
+
+Bob reads [`pom.xml`](../pom.xml) and responds with the current versions, the two property changes needed, and flags Lombok as a dependency worth reviewing.
+
+**Prompt 2 — Analyse the domain model:**
+```text
+@src/main/java/com/university/assettracker/domain
+Which of these classes are candidates for Java records?
+Which ones cannot be records and why? Give me a short summary.
+```
+
+Bob reads all five domain files and responds:
+
+```
+ReplacementRecommendation — record candidate ✅
+  Pure value object, no JPA annotations, no mutable state.
+
+Asset — cannot be a record ❌
+  @Entity class. Hibernate proxy requires a no-arg constructor
+  and mutable setters. Records are immutable — incompatible.
+
+MaintenanceEvent — cannot be a record ❌
+  Same constraint as Asset. @Entity + @ManyToOne lazy fetch
+  require mutable state and a no-arg constructor.
+
+AssetType, WarrantyStatus, MaintenanceStatus — enums, not applicable.
+```
+
+**Prompt 3 — Analyse the service layer:**
+```text
+@src/main/java/com/university/assettracker/service/ReplacementService.java
+Are there any Java 16+ stream improvements that could simplify
+getRecommendations()? Give me a short summary.
+```
+
+Bob identifies the `forEach` + mutable `ArrayList` pattern and recommends `Stream.mapMulti()` as the idiomatic Java 16+ replacement.
+
+**Prompt 4 — Check for Lombok usage:**
+```text
+@src Is Lombok actually used anywhere in this codebase?
+Search for @Data, @Builder, @Getter, @Setter annotations.
+Give me a short summary.
+```
+
+Bob scans the source tree and confirms: zero Lombok annotations in any `.java` file. Removing the POM dependency is a safe no-op.
 
 ---
 
-### 2.3 — `ReplacementRecommendation` → Java Record (Phase 2) — the most visible change
+### 2.2 — Step 2: Plan with Plan Mode
 
-> _"This is the cleanest win. `ReplacementRecommendation` is a pure value object — it holds an asset and a list of reasons. It has no JPA annotations, no mutable state, no lifecycle callbacks. It's the textbook use case for a record."_
+> _"Switch to Plan mode — `/plan` in the chat. Plan mode reads the codebase and produces a structured implementation plan for your review before any changes are made."_
 
-**Before** ([`ReplacementRecommendation.java`](../src/main/java/com/university/assettracker/domain/ReplacementRecommendation.java)):
-```java
-public class ReplacementRecommendation {
-    private final Asset asset;
-    private final List<String> reasons;
+**Prompt:**
+```text
+@pom.xml @src/main/java/com/university/assettracker/domain/ReplacementRecommendation.java
+@src/main/java/com/university/assettracker/service/ReplacementService.java
+@.github/workflows/ci.yml @src/main/resources/application.properties
 
-    public ReplacementRecommendation(Asset asset, List<String> reasons) {
-        this.asset = asset;
-        this.reasons = List.copyOf(reasons);
-    }
-
-    public Asset getAsset()          { return asset; }
-    public List<String> getReasons() { return reasons; }
-    // + getSeverity(), getSeverityBadgeClass()
-}
+Create a plan to modernize this Spring Boot app from Java 21 / Boot 3.2.5
+to Java 25 / Boot 3.5. Include:
+- pom.xml version bumps and Lombok removal
+- ReplacementRecommendation converted to a record
+- ReplacementService stream cleanup using mapMulti
+- Virtual threads enabled in application.properties
+- CI pipeline updated to Java 25
+Identify any risks per change.
 ```
 
-**After:**
-```java
-public record ReplacementRecommendation(Asset asset, List<String> reasons) {
+Bob produces a phased plan — read it carefully before approving. The plan it generates maps directly to the five phases in [`docs/java25-upgrade-plan.md`](java25-upgrade-plan.md):
 
-    // Compact canonical constructor — defensive copy
-    public ReplacementRecommendation {
-        reasons = List.copyOf(reasons);
-    }
-
-    public String getSeverity() {
-        return reasons.size() >= 2 ? "HIGH" : "MEDIUM";
-    }
-
-    public String getSeverityBadgeClass() {
-        return getSeverity().equals("HIGH") ? "bg-danger" : "bg-warning text-dark";
-    }
-}
-```
-
-**What we removed:** the explicit field declarations, the full constructor, and the two boilerplate accessors.  
-**What the compiler generates for free:** `asset()`, `reasons()`, `equals()`, `hashCode()`, `toString()`.  
-**Template impact:** zero — Thymeleaf 3.1 resolves both `asset()` and `getAsset()`.
-
-> **Why the JPA entities can't be records:** `Asset` and `MaintenanceEvent` are `@Entity` classes. Hibernate's proxy mechanism requires a public no-arg constructor and mutable setters. Records are immutable and have no no-arg constructor — they stay as-is. This is not a limitation of this codebase; it's a fundamental JPA constraint.
-
----
-
-### 2.4 — `ReplacementService` Stream Cleanup (Phase 2)
-
-> _"The existing `getRecommendations()` method builds an `ArrayList`, mutates it inside a `forEach`, sorts it, then returns it. In Java 16+ we can use `Stream.mapMulti()` to express this as a single pipeline — no mutable intermediate list."_
-
-**Before (key structure):**
-```java
-List<ReplacementRecommendation> result = new ArrayList<>();
-assetRepository.findAll().forEach(asset -> {
-    // ... build reasons list ...
-    if (!reasons.isEmpty()) result.add(new ReplacementRecommendation(asset, reasons));
-});
-result.sort(...);
-return result;
-```
-
-**After:**
-```java
-return assetRepository.findAll().stream()
-    .<ReplacementRecommendation>mapMulti((asset, downstream) -> {
-        // ... build reasons list ...
-        if (!reasons.isEmpty()) downstream.accept(new ReplacementRecommendation(asset, reasons));
-    })
-    .sorted(...)
-    .toList();   // returns unmodifiable list — already used elsewhere in the codebase
-```
-
-`mapMulti` is the right tool when a single input element should produce zero or one output element — exactly what this filter-and-wrap pattern is.
-
----
-
-### 2.5 — Virtual Threads (Phase 3) — one line
-
-> _"Spring Boot 3.2 added first-class virtual thread support for Tomcat. In Java 25 virtual threads are fully stable. Enabling them requires exactly one property — no code changes, no dependency changes."_
-
-```properties
-# application.properties
-spring.threads.virtual.enabled=true
-```
-
-Every HTTP request is now dispatched on a virtual thread. For an I/O-bound application like this one (JPA queries on every request), this is a free throughput improvement — platform threads are no longer blocked waiting on JDBC.
-
----
-
-### 2.6 — Language Features Already in Use
-
-> _"One thing worth noting: this codebase already uses several post-Java-11 features correctly. The upgrade doesn't need to introduce them — they're already there."_
-
-| Feature | JEP | Where in this codebase |
+| Phase | Files | Risk |
 |---|---|---|
-| Pattern matching `instanceof` | JEP 394 (Java 16) | `Asset.equals()`, `MaintenanceEvent.equals()` |
-| Switch expressions | JEP 361 (Java 14) | `MaintenanceController.list()` — filter routing |
-| `Stream.toList()` | Java 16 | `AssetService`, `MaintenanceService`, `ReplacementService` |
-| `String.formatted()` | Java 15 | `ReplacementService` — reason message construction |
-| `var` local inference | JEP 286 (Java 10) | `DashboardService.countByType()`, `ReplacementController.list()` |
-| Records (after upgrade) | JEP 395 (Java 16) | `ReplacementRecommendation` |
-| Virtual threads (after upgrade) | JEP 505 (Java 25) | All Tomcat request threads via `application.properties` |
+| 1 — POM bump + Lombok removal | `pom.xml` | Low — no Lombok annotations in source |
+| 2 — Record conversion | `ReplacementRecommendation.java` | Low — Thymeleaf 3.1 resolves record accessors |
+| 3 — Stream cleanup | `ReplacementService.java` | Low — behaviour-identical refactor |
+| 4 — Virtual threads | `application.properties` | None — one property, transparent to JDBC |
+| 5 — CI update | `.github/workflows/ci.yml` | Medium — use `25-ea` until Temurin GA ships |
+
+> **Review the plan before proceeding.** Confirm it aligns with your upgrade scope, then switch to Agent mode to implement.
 
 ---
 
-### 2.7 — CI Pipeline (`/.github/workflows/ci.yml`)
+### 2.3 — Step 3: Implement with Agent Mode
 
-> _"One line change in the workflow — swap Java 21 for 25."_
+> _"Switch to Agent mode — `/agent` in the chat. Agent mode can read and write files. Bob will apply each change and show you a diff to review before accepting."_
 
-```yaml
-# Before
-- name: Set up Java 21
-  uses: actions/setup-java@v4
-  with:
-    java-version: '21'
-    distribution: 'temurin'
-    cache: maven
+Run the implementation prompts one phase at a time so each change is isolated and reviewable.
 
-# After
-- name: Set up Java 25
-  uses: actions/setup-java@v4
-  with:
-    java-version: '25'        # use '25-ea' until GA ships (Sept 2025)
-    distribution: 'temurin'
-    cache: maven
+**Phase 1 — POM bump:**
+```text
+@pom.xml
+Update Spring Boot parent to 3.5.0, java.version to 25,
+and remove the Lombok dependency block and its boot-plugin exclusion.
+Keep the change minimal — no other modifications.
+```
+
+Bob shows a diff. Review it, then **Accept**.
+
+**Phase 2 — Record conversion:**
+```text
+@src/main/java/com/university/assettracker/domain/ReplacementRecommendation.java
+Convert this class to a Java record. Use a compact canonical constructor
+for the defensive List.copyOf(). Retain getSeverity() and
+getSeverityBadgeClass() as instance methods on the record.
+```
+
+Bob shows the before/after diff — field declarations, explicit constructor, and two accessor methods collapse into the record header and compact constructor. Review it, then **Accept**.
+
+**Phase 3 — Stream cleanup:**
+```text
+@src/main/java/com/university/assettracker/service/ReplacementService.java
+Replace the forEach + mutable ArrayList pattern in getRecommendations()
+with Stream.mapMulti(). The method's return type and behaviour must
+be identical — this is a refactor only.
+```
+
+Bob shows the diff. Verify the sorted comparator still references `r.asset().getName()` (record accessor, not `r.getAsset()`). Review, then **Accept**.
+
+**Phase 4 — Virtual threads:**
+```text
+@src/main/resources/application.properties
+Add spring.threads.virtual.enabled=true with a comment explaining
+what it does.
+```
+
+Bob appends one line. Review, then **Accept**.
+
+**Phase 5 — CI pipeline:**
+```text
+@.github/workflows/ci.yml
+Update the Java setup step from java-version '21' to '25'.
+Add a comment noting to use '25-ea' until Temurin GA ships in Sept 2025.
+```
+
+Bob shows the diff. Review, then **Accept**.
+
+---
+
+### 2.4 — Step 4: Verify the Modernized Build
+
+> _"Back in Agent mode, ask Bob to verify the upgrade compiled and the tests pass."_
+
+**Prompt:**
+```text
+Build and test the modernized application to verify it works correctly
+on Java 25 / Spring Boot 3.5. Run mvn verify and confirm the context
+loads and all tests pass. Give me a short summary.
+```
+
+Bob runs `mvn --batch-mode verify` and reports back:
+
+```
+✅ Modernization Verified — Java 25 / Spring Boot 3.5
+
+Build Results:
+- pom.xml: Spring Boot 3.5.0, java.version 25 ✅
+- Lombok dependency removed ✅
+- mvn verify: BUILD SUCCESS ✅
+
+Domain:
+- ReplacementRecommendation compiled as record ✅
+- Asset and MaintenanceEvent unchanged (JPA entities) ✅
+
+Service:
+- ReplacementService.getRecommendations() uses Stream.mapMulti() ✅
+- Return type and sort order identical to before ✅
+
+Runtime:
+- spring.threads.virtual.enabled=true active ✅
+- Context loads in ~4s, all 25 assets seeded ✅
+- Replacement recommendations: same count, same severity ranking ✅
+
+CI:
+- .github/workflows/ci.yml updated to java-version: '25' ✅
+
+Summary: Platform upgrade complete. Java 25 / Spring Boot 3.5 with
+~30 lines changed across 6 files. No breaking changes. All
+functionality identical to the Java 21 baseline.
 ```
 
 ---
 
-### 2.8 — Risk Summary
+### 2.5 — What Bob's Workflow Enforced
 
-> _"Three things make this upgrade particularly low-risk for this project:"_
+> _"The mode structure isn't just organisational — it's a safety gate at each stage."_
 
-1. **No annotation processors** — no kapt, no Lombok APT, no MapStruct. Annotation processing is the most common source of Java version friction.
-2. **No reflection-heavy libraries** — no Jackson (JSON), no custom serialisation. Hibernate's internal reflection is handled by Boot's auto-configuration.
-3. **Already modern** — the codebase doesn't use any deprecated APIs from Java 9–21. There's nothing to un-migrate.
+| Mode | Safety property | Applied here |
+|---|---|---|
+| **Ask** | Read-only — cannot modify files | Explored all domain, service, and config files before forming any plan |
+| **Plan** | Produces a reviewable plan before any changes | Identified the JPA record constraint and Lombok no-op before touching code |
+| **Agent** | Shows a diff per change — Accept / Reject per file | Each of the 5 phases was an isolated, reviewable change |
 
-Total lines changed across all five phases: **~30 lines** across 6 files.
+The upgrade that Ask mode scoped, Plan mode structured, and Agent mode executed is documented in full at [`docs/java25-upgrade-plan.md`](java25-upgrade-plan.md).
 
 ---
 
