@@ -1,6 +1,6 @@
-# 🎓 Classroom Asset Tracker
+# 🎓 Campus Academic Technology Registry
 
-[![CI](https://github.com/Alyssa-Mercado/classroom-asset-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Alyssa-Mercado/classroom-asset-tracker/actions/workflows/ci.yml)
+[![CI](https://github.com/Alyssa-Mercado/campus-academic-tech-registry/actions/workflows/ci.yml/badge.svg)](https://github.com/Alyssa-Mercado/campus-academic-tech-registry/actions/workflows/ci.yml)
 
 A Spring Boot web application for managing classroom technology assets across university buildings.
 

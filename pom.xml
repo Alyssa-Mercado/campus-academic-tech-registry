@@ -13,10 +13,10 @@
     </parent>
 
     <groupId>com.university</groupId>
-    <artifactId>classroom-asset-tracker</artifactId>
+    <artifactId>campus-academic-tech-registry</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>classroom-asset-tracker</name>
-    <description>Classroom Technology Asset Tracker</description>
+    <name>campus-academic-tech-registry</name>
+    <description>Campus Academic Technology Registry</description>
 
     <properties>
         <java.version>21</java.version>
