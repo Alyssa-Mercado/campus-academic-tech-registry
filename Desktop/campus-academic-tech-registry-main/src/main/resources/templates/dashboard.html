@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:replace="~{fragments/layout :: layout(~{::section})}">
+<body>
+<section>
+
+    <h2 class="h4 mb-4">Dashboard</h2>
+
+    <!-- ── Stat cards row ─────────────────────────────────────────────── -->
+    <div class="row g-3 mb-4">
+
+        <!-- Total Assets -->
+        <div class="col-sm-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-1 text-primary"><i class="bi bi-laptop"></i></div>
+                    <div>
+                        <div class="fs-2 fw-bold" th:text="${totalAssets}">0</div>
+                        <div class="text-muted small">Total Assets</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a th:href="@{/assets}" class="btn btn-sm btn-outline-primary w-100">View All Assets</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Maintenance -->
+        <div class="col-sm-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-1 text-info"><i class="bi bi-calendar-check"></i></div>
+                    <div>
+                        <div class="fs-2 fw-bold" th:text="${upcomingCount}">0</div>
+                        <div class="text-muted small">Upcoming Maintenance (30 days)</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a th:href="@{/maintenance}" class="btn btn-sm btn-outline-info w-100">View Maintenance</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Maintenance -->
+        <div class="col-sm-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm"
+                 th:classappend="${overdueCount > 0} ? 'border-danger' : ''">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-1" th:classappend="${overdueCount > 0} ? 'text-danger' : 'text-secondary'">
+                        <i class="bi bi-tools"></i>
+                    </div>
+                    <div>
+                        <div class="fs-2 fw-bold"
+                             th:classappend="${overdueCount > 0} ? 'text-danger' : ''"
+                             th:text="${overdueCount}">0</div>
+                        <div class="text-muted small">Overdue Maintenance</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a th:href="@{/maintenance}" class="btn btn-sm btn-outline-danger w-100">View Maintenance</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expiring Soon Warranties -->
+        <div class="col-sm-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-1 text-warning"><i class="bi bi-shield-exclamation"></i></div>
+                    <div>
+                        <div class="fs-2 fw-bold text-warning" th:text="${expiringSoonCount}">0</div>
+                        <div class="text-muted small">Warranties Expiring Soon</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a th:href="@{/assets}" class="btn btn-sm btn-outline-warning w-100">View Assets</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expired Warranties -->
+        <div class="col-sm-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-1 text-danger"><i class="bi bi-shield-x"></i></div>
+                    <div>
+                        <div class="fs-2 fw-bold text-danger" th:text="${expiredCount}">0</div>
+                        <div class="text-muted small">Expired Warranties</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a th:href="@{/assets}" class="btn btn-sm btn-outline-danger w-100">View Assets</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Replacement Recommendations -->
+        <div class="col-sm-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm"
+                 th:classappend="${recommendationCount > 0} ? 'border-danger' : ''">
+                <div class="card-body d-flex align-items-center gap-3">
+                    <div class="fs-1" th:classappend="${recommendationCount > 0} ? 'text-danger' : 'text-success'">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <div class="fs-2 fw-bold"
+                             th:classappend="${recommendationCount > 0} ? 'text-danger' : 'text-success'"
+                             th:text="${recommendationCount}">0</div>
+                        <div class="text-muted small">Replacement Recommendations</div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-0 pt-0">
+                    <a th:href="@{/recommendations}" class="btn btn-sm btn-outline-danger w-100">View Recommendations</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Asset type breakdown table ─────────────────────────────────── -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-dark text-white fw-semibold">
+            <i class="bi bi-bar-chart-line me-1"></i> Asset Breakdown by Type
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>Asset Type</th>
+                    <th class="text-end">Count</th>
+                    <th>Distribution</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="entry : ${countByType}">
+                    <td>
+                        <span class="badge bg-secondary me-1"
+                              th:text="${entry.key.displayName}"></span>
+                    </td>
+                    <td class="text-end fw-semibold" th:text="${entry.value}"></td>
+                    <td style="width:40%">
+                        <div class="progress" style="height:10px;">
+                            <div class="progress-bar bg-primary"
+                                 th:style="'width:' + (${totalAssets} > 0 ? (${entry.value} * 100 / ${totalAssets}) : 0) + '%'">
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

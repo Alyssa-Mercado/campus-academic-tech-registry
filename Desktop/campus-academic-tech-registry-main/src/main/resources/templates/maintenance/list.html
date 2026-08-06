@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:replace="~{fragments/layout :: layout(~{::section})}">
+<body>
+<section>
+
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">Maintenance Events</h2>
+        <a th:href="@{/maintenance/new}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg"></i> Log Maintenance
+        </a>
+    </div>
+
+    <!-- Filter tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link"
+               th:href="@{/maintenance}"
+               th:classappend="${filter == ''} ? ' active' : ''">
+                <i class="bi bi-list-ul"></i> All
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               th:href="@{/maintenance(filter='upcoming')}"
+               th:classappend="${filter == 'upcoming'} ? ' active' : ''">
+                <i class="bi bi-calendar-check"></i> Upcoming (30 days)
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link"
+               th:href="@{/maintenance(filter='overdue')}"
+               th:classappend="${filter == 'overdue'} ? ' active' : ''">
+                <i class="bi bi-exclamation-triangle"></i> Overdue
+            </a>
+        </li>
+    </ul>
+
+    <!-- Events table -->
+    <div class="card">
+        <div class="card-body p-0">
+
+            <!-- Empty state -->
+            <div th:if="${events.isEmpty()}" class="text-center text-muted py-5">
+                <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+                No maintenance events found.
+                <a th:href="@{/maintenance}" class="d-block mt-1 small">View all events</a>
+            </div>
+
+            <div th:unless="${events.isEmpty()}">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                    <tr>
+                        <th>Asset</th>
+                        <th>Type</th>
+                        <th>Building / Room</th>
+                        <th>Scheduled Date</th>
+                        <th>Status</th>
+                        <th>Completed Date</th>
+                        <th>Description</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="event : ${events}"
+                        th:classappend="${event.status == T(com.university.assettracker.domain.MaintenanceStatus).OVERDUE} ? 'table-danger'
+                                      : (${event.status == T(com.university.assettracker.domain.MaintenanceStatus).SCHEDULED
+                                         and event.scheduledDate != null
+                                         and !event.scheduledDate.isAfter(#temporals.createToday().plusDays(7))} ? 'table-warning' : '')">
+
+                        <!-- Asset name -->
+                        <td>
+                            <a th:if="${event.asset != null}"
+                               th:href="@{/assets/{id}(id=${event.asset.id})}"
+                               th:text="${event.asset.name}"
+                               class="fw-semibold text-decoration-none">
+                            </a>
+                            <span th:if="${event.asset == null}" class="text-muted">—</span>
+                        </td>
+
+                        <!-- Asset type badge -->
+                        <td>
+                            <span th:if="${event.asset != null}"
+                                  class="badge bg-secondary"
+                                  th:text="${event.asset.assetType.displayName}"></span>
+                        </td>
+
+                        <!-- Building / Room -->
+                        <td th:text="${event.asset != null}
+                                     ? (event.asset.building + ' / ' + event.asset.roomNumber)
+                                     : '—'">
+                        </td>
+
+                        <!-- Scheduled date -->
+                        <td th:text="${event.scheduledDate != null}
+                                     ? ${#temporals.format(event.scheduledDate, 'dd MMM yyyy')}
+                                     : '—'">
+                        </td>
+
+                        <!-- Status badge -->
+                        <td>
+                            <span th:class="'badge ' + ${event.status.badgeClass}"
+                                  th:text="${event.status.displayName}"></span>
+                        </td>
+
+                        <!-- Completed date -->
+                        <td th:text="${event.completedDate != null}
+                                     ? ${#temporals.format(event.completedDate, 'dd MMM yyyy')}
+                                     : '—'">
+                        </td>
+
+                        <!-- Description -->
+                        <td th:text="${event.description}"></td>
+
+                        <!-- Actions -->
+                        <td class="text-end text-nowrap">
+
+                            <!-- Mark Complete (only for non-COMPLETED) -->
+                            <form th:if="${event.status != T(com.university.assettracker.domain.MaintenanceStatus).COMPLETED}"
+                                  th:action="@{/maintenance/{id}/complete(id=${event.id})}"
+                                  method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-success me-1">
+                                    <i class="bi bi-check-lg"></i> Complete
+                                </button>
+                            </form>
+
+                            <a th:href="@{/maintenance/{id}/edit(id=${event.id})}"
+                               class="btn btn-sm btn-outline-secondary me-1">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    th:data-bs-target="'#deleteModal-' + ${event.id}">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+
+                            <!-- Delete confirmation modal -->
+                            <div class="modal fade"
+                                 th:id="'deleteModal-' + ${event.id}"
+                                 tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Confirm Delete</h5>
+                                            <button type="button" class="btn-close"
+                                                    data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body text-start">
+                                            <p>Delete maintenance event for
+                                                <strong th:text="${event.asset != null ? event.asset.name : 'this asset'}"></strong>
+                                                scheduled on
+                                                <strong th:text="${event.scheduledDate != null ? #temporals.format(event.scheduledDate, 'dd MMM yyyy') : '—'}"></strong>?
+                                            </p>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                    data-bs-dismiss="modal">Cancel</button>
+                                            <form th:action="@{/maintenance/{id}/delete(id=${event.id})}"
+                                                  method="post" class="d-inline">
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

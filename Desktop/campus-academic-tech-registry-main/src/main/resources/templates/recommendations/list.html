@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en"
+      th:replace="~{fragments/layout :: layout(~{::section})}">
+<body>
+<section>
+
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0">
+            Replacement Recommendations
+            <span class="badge bg-secondary ms-2" th:text="${totalCount}">0</span>
+        </h2>
+    </div>
+
+    <!-- Info alert explaining the two rules -->
+    <div class="alert alert-info mb-4" role="alert">
+        <i class="bi bi-info-circle-fill me-1"></i>
+        <strong>How recommendations are generated:</strong>
+        Assets are flagged when they meet one or both of the following criteria:
+        <ul class="mb-0 mt-1">
+            <li><strong>Rule 1 — Age threshold:</strong> Asset age (years since purchase) exceeds the configured replacement threshold for its type.</li>
+            <li><strong>Rule 2 — Expired warranty &amp; overdue maintenance:</strong> Asset warranty has expired <em>and</em> at least one maintenance event is overdue.</li>
+        </ul>
+        Severity is <span class="badge bg-danger">HIGH</span> when both rules apply,
+        <span class="badge bg-warning text-dark">MEDIUM</span> when only one applies.
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${recommendations.isEmpty()}" class="alert alert-success" role="alert">
+        <i class="bi bi-check-circle-fill me-1"></i>
+        <strong>No replacement recommendations at this time.</strong>
+        All assets are within acceptable parameters.
+    </div>
+
+    <!-- Recommendations table -->
+    <div th:unless="${recommendations.isEmpty()}" class="card">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                <tr>
+                    <th>Asset Name</th>
+                    <th>Type</th>
+                    <th>Building / Room</th>
+                    <th>Age (yrs)</th>
+                    <th>Warranty Status</th>
+                    <th>Reasons</th>
+                    <th>Severity</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="rec : ${recommendations}"
+                    th:classappend="${rec.severity == 'HIGH'} ? 'table-danger' : ''">
+
+                    <!-- Asset name — link to detail page -->
+                    <td>
+                        <a th:href="@{/assets/{id}(id=${rec.asset.id})}"
+                           th:text="${rec.asset.name}"
+                           class="fw-semibold text-decoration-none"></a>
+                    </td>
+
+                    <!-- Type badge -->
+                    <td>
+                        <span class="badge bg-secondary"
+                              th:text="${rec.asset.assetType.displayName}"></span>
+                    </td>
+
+                    <!-- Building / Room -->
+                    <td th:text="${rec.asset.building + ' / ' + rec.asset.roomNumber}"></td>
+
+                    <!-- Age in years -->
+                    <td th:text="${rec.asset.ageYears}"></td>
+
+                    <!-- Warranty status badge -->
+                    <td>
+                        <span th:class="'badge ' + ${rec.asset.warrantyStatus.badgeClass}"
+                              th:text="${rec.asset.warrantyStatus.displayName}"></span>
+                    </td>
+
+                    <!-- Reasons — each as its own badge -->
+                    <td>
+                        <span th:each="reason : ${rec.reasons}"
+                              class="badge bg-secondary me-1"
+                              th:text="${reason}"></span>
+                    </td>
+
+                    <!-- Severity badge -->
+                    <td>
+                        <span th:class="'badge ' + ${rec.severityBadgeClass}"
+                              th:text="${rec.severity}"></span>
+                    </td>
+
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Summary footer -->
+    <div th:unless="${recommendations.isEmpty()}" class="mt-3 text-muted small">
+        <span th:with="highCount=${#lists.size(recommendations.?[severity == 'HIGH'])},
+                       medCount=${#lists.size(recommendations.?[severity == 'MEDIUM'])}">
+            <strong th:text="${highCount}"></strong> HIGH severity &bull;
+            <strong th:text="${medCount}"></strong> MEDIUM severity
+        </span>
+    </div>
+
+</section>
+</body>
+</html>
