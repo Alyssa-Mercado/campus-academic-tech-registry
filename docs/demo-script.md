@@ -1,132 +1,92 @@
 # Demo Script — Campus Academic Technology Registry
 
 > **Audience:** Technical reviewers, stakeholders, or interviewers
-> **Duration:** ~25 minutes (Part 1: 8 min · Part 2: 7 min · Part 3: 10 min)
-> **Prerequisites:** Java 21+, Maven 3, browser open at `http://localhost:8080`
+> **Duration:** ~15 minutes (Part 1: 5 min · Part 2: 7 min · Part 3: 3 min)
+> **Prerequisites:** Java 25+, Maven 3, browser open at `http://localhost:8080`
 
 ---
 
 ## Before You Start
 
 ```bash
-# Clone and run — the database seeds itself on first boot
 git clone https://github.com/Alyssa-Mercado/campus-academic-tech-registry.git
 cd campus-academic-tech-registry
 mvn spring-boot:run
 ```
 
-The app starts in ~4 seconds. 25 assets and 35 maintenance events are seeded automatically.  
+The app starts in ~4 seconds. 25 assets and 35 maintenance events are seeded automatically.
 Open **http://localhost:8080** in your browser.
 
 ---
 
-## Part 1 — Application Walkthrough (current state, Java 21 / Spring Boot 3.2.5)
+## Part 1 — Application Walkthrough
 
 ### 1.1 — Dashboard (`/`)
 
-> _"The landing page gives an at-a-glance health summary of every asset in the registry."_
+> _"The landing page gives you an at-a-glance health summary of every asset in the registry."_
 
 Point out:
 - **Total assets** counter (25)
 - **By type** breakdown — Classroom PC, Projector, Smartboard, Camera, Microphone
-- **Maintenance** tiles: upcoming (next 30 days) vs overdue
-- **Warranty** tiles: expiring soon (within 90 days) vs expired
-- **Replacement recommendations** badge — assets flagged by the rule engine
-
-**Why it matters:** A department head can see the entire estate's health without opening a single record.
+- **Maintenance** tiles: upcoming vs overdue
+- **Warranty** tiles: expiring soon vs expired
+- **Replacement recommendations** count — assets flagged by the rule engine
 
 ---
 
 ### 1.2 — Asset List (`/assets`)
 
-> _"Every registered device is here, sortable by type or searchable by name or building."_
+> _"Every registered device is listed here. You can filter by type or search by name or building."_
 
 Demo steps:
-1. Show the **full list** — 25 assets, alphabetical order
-2. Use the **type filter** dropdown — select `Projector` → 5 projectors
-3. Use the **search bar** — type `Science` → all Science Hall assets
-4. Click **Dell OptiPlex 7060** to open its detail page
-
-**Code note:** Filtering and search are handled in [`AssetService.findByType()`](../src/main/java/com/university/assettracker/service/AssetService.java) and [`AssetService.search()`](../src/main/java/com/university/assettracker/service/AssetService.java) — both delegate to Spring Data JPA derived queries, keeping the controller thin.
+1. Show the full list — 25 assets
+2. Filter by type — select `Projector` → 5 results
+3. Search — type `Science` → all Science Hall assets
 
 ---
 
 ### 1.3 — Asset Detail (`/assets/1`)
 
-> _"Each asset shows its full profile plus every maintenance event logged against it."_
+> _"Each asset shows its full profile and maintenance history."_
 
-Point out on the Dell OptiPlex 7060:
-- **Warranty badge** — `Expired` (red), computed at runtime from `warrantyExpiryDate`; no stored enum column
-- **Age** — calculated via `ChronoUnit.YEARS.between(purchaseDate, LocalDate.now())` — always current
-- **Maintenance history** — 2 events: one `Completed` from 6 months ago, one `Scheduled` in 7 days
+On the Dell OptiPlex 7060, point out:
+- **Warranty badge** — `Expired` (red), always computed live from the expiry date
+- **Age** — always current, calculated on the fly
+- **Maintenance history** — past and upcoming events listed together
 - **Edit / Delete** actions
-
-**Code note:** `getWarrantyStatus()` and `getAgeYears()` are `@Transient` computed methods on [`Asset.java`](../src/main/java/com/university/assettracker/domain/Asset.java) — nothing is persisted, nothing can drift out of sync.
 
 ---
 
 ### 1.4 — Add a New Asset (`/assets/new`)
 
-> _"Demonstrate the full create flow."_
+> _"Adding a new asset takes about 30 seconds."_
 
-Fill in:
-| Field | Value |
-|---|---|
-| Name | `Demo Webcam` |
-| Type | `Camera` |
-| Serial Number | `SN-DEMO-001` |
-| Building | `Science Hall` |
-| Room | `Room 101` |
-| Purchase Date | 3 years ago |
-| Warranty Expiry | 1 year from today |
-
-Click **Save** — land on the new asset's detail page.
+Fill in any values and click **Save** — you land directly on the new asset's detail page.
 
 ---
 
 ### 1.5 — Maintenance Tracker (`/maintenance`)
 
-> _"Maintenance events are the heartbeat of the replacement rule engine."_
+> _"Maintenance is what drives the replacement rule engine."_
 
 Demo steps:
-1. Show **All events** (35 events, sorted by scheduled date)
-2. Switch filter to **Upcoming** — events due in the next 30 days; shows the pending workload
-3. Switch filter to **Overdue** — 13+ events flagged red; `MaintenanceService` auto-promotes any `SCHEDULED` event whose date has passed to `OVERDUE` on every page load
-4. Click **Mark Complete** on one overdue event — it flips to `Completed` with today's date
-
-**Code note:** The status sync lives in [`MaintenanceService.syncAndSaveOverdue()`](../src/main/java/com/university/assettracker/service/MaintenanceService.java) — no scheduled job needed; the transition happens lazily on each read.
+1. Show **All events** — 35 events sorted by date
+2. Switch to **Upcoming** — pending workload for the next 30 days
+3. Switch to **Overdue** — events flagged red automatically when their date passes
+4. Click **Mark Complete** on one — it flips to `Completed` instantly
 
 ---
 
 ### 1.6 — Replacement Recommendations (`/recommendations`)
 
-> _"The rule engine surfaces assets that need capital planning attention."_
+> _"The rule engine flags assets that need capital planning attention."_
 
 Point out:
-- **HIGH severity** (red badge) — assets where _both_ rules fired
-- **MEDIUM severity** (amber badge) — assets where one rule fired
-- The two rules driving every recommendation:
-  - **Rule 1 — Age:** Asset age exceeds the configured threshold for its type (PC: 5 yr, Projector: 7 yr, Smartboard: 8 yr, Camera/Microphone: 6 yr)
-  - **Rule 2 — Warranty + Maintenance:** Warranty expired _and_ at least one maintenance event is overdue
-
-**Code note:** Thresholds are externalised in [`application.properties`](../src/main/resources/application.properties) under `replacement.age-thresholds.*` and loaded via [`ReplacementRuleConfig`](../src/main/java/com/university/assettracker/config/ReplacementRuleConfig.java) — no code change needed to tune them per environment.
-
----
-
-### 1.7 — Architecture Summary
-
-> _"Before we move on — here's what's under the hood."_
-
-| Layer | Technology | Key design choice |
-|---|---|---|
-| Language | Java 21 | Pattern matching in `equals()`, switch expressions, `toList()` |
-| Framework | Spring Boot 3.2.5 | Constructor injection throughout — no `@Autowired` field injection |
-| Persistence | Spring Data JPA + Hibernate 6 | Derived query methods — no JPQL/SQL written by hand |
-| Domain | `Asset`, `MaintenanceEvent` | Hand-rolled Builder pattern; computed `@Transient` fields |
-| Value object | `ReplacementRecommendation` | Immutable POJO — wraps asset + reasons list |
-| Config | `@ConfigurationProperties` | Type-safe binding of replacement thresholds |
-| Templating | Thymeleaf 3.1 | Server-side rendering; Bootstrap 5 bundled locally — no CDN dependency |
-| Database | H2 in-memory (default) / PostgreSQL (dev profile) | Switches with a single `--spring.profiles.active=dev` flag |
+- **HIGH severity** (red) — both rules fired
+- **MEDIUM severity** (amber) — one rule fired
+- Two rules:
+  - **Age** — asset exceeds the threshold for its type (e.g. PC: 5 yr, Projector: 7 yr)
+  - **Warranty + Maintenance** — warranty expired and at least one maintenance event is overdue
 
 ---
 
