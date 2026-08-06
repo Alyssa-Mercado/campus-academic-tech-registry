@@ -8,7 +8,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.13</version>
+        <version>3.5.16</version>
         <relativePath/>
     </parent>
 
@@ -20,6 +20,9 @@
 
     <properties>
         <java.version>25</java.version>
+        <!-- Explicit override: postgresql 42.7.11 (Boot 3.5.16 default) is still
+             vulnerable to GHSA-j92g; pin to 42.7.12 which is the first fix -->
+        <postgresql.version>42.7.12</postgresql.version>
     </properties>
 
     <dependencies>
