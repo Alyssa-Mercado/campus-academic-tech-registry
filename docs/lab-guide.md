@@ -24,41 +24,29 @@ This lab walks you through two things:
 
 ---
 
-## Part 0 — Install Bob
+## Part 0 — Open Bob
 
-### Step 0.1 — Install the Bob extension
+### Step 0.1 — Launch the Bob IDE
 
-Bob works inside **VS Code** or **IntelliJ IDEA**. Pick the IDE you use and follow the install for that one.
+If you haven't downloaded IBM Bob yet, get it from **https://ibm.com/bob** and install it like any desktop application.
 
-**VS Code:**
-1. Open VS Code
-2. Click the **Extensions** icon in the left sidebar (or press `Cmd+Shift+X`)
-3. Search for **IBM Bob**
-4. Click **Install**
-5. When prompted, sign in with your IBM w3id credentials
-
-**IntelliJ IDEA:**
-1. Open IntelliJ
-2. Go to **IntelliJ IDEA → Settings → Plugins**
-3. Search for **IBM Bob**
-4. Click **Install** and restart IntelliJ when prompted
-5. Sign in with your IBM w3id credentials
+Once installed:
+1. Open the **IBM Bob** application
+2. Sign in with your IBM w3id credentials when prompted
+3. Wait for the IDE to finish loading — you should land on a welcome screen or an empty workspace
 
 ---
 
 ### Step 0.2 — Open the Bob chat panel
 
-**VS Code:**
-- Click the **Bob icon** in the left Activity Bar (it looks like a chat bubble with an IBM logo)
-- Or press `Cmd+Shift+P` and type `Bob: Open Chat`
+The Bob chat panel is the primary way you interact with Bob throughout this lab.
 
-**IntelliJ:**
-- Click the **Bob panel** tab at the bottom or right side of your IDE window
-- Or go to **View → Tool Windows → Bob**
+- Look for a **chat icon** or **"Bob" tab** in the sidebar or bottom panel of the IDE
+- Click it to open the chat panel — you should see a text input box at the bottom
 
-You should see a chat input box at the bottom of the panel that says something like *"Ask Bob anything..."*. That is where you will type commands throughout this lab.
+You should see a chat input box that says something like *"Ask Bob anything..."*. That is where you will type commands throughout this lab.
 
-> **Tip:** Keep the Bob panel open alongside your editor the whole time — you'll be switching between the chat and your code files frequently.
+> **Tip:** Keep the Bob chat panel open alongside your editor the whole time — you'll be switching between the chat and your code files frequently.
 
 ---
 
@@ -70,7 +58,7 @@ In the Bob chat panel, type:
 Hello
 ```
 
-Bob should respond within a few seconds. If you see an error about authentication or connection, make sure you completed the sign-in step in Step 0.1.
+Bob should respond within a few seconds. If you see an error about authentication or connection, make sure you completed sign-in in Step 0.1.
 
 ---
 
@@ -95,11 +83,11 @@ BUILD SUCCESS
 
 ---
 
-### Step 1.2 — Open the project in your IDE
+### Step 1.2 — Open the project in the Bob IDE
 
-**VS Code:** `File → Open Folder` → select the `campus-academic-tech-registry` folder
+In the Bob IDE, open the project folder:
 
-**IntelliJ:** `File → Open` → select the `campus-academic-tech-registry` folder → click **Trust Project** if prompted
+`File → Open Folder` → select the `campus-academic-tech-registry` folder
 
 Wait for Maven to finish importing dependencies (progress bar at the bottom of the IDE).
 
