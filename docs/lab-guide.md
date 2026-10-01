@@ -88,22 +88,25 @@ Bob should respond within a few seconds. If you see an error about authenticatio
 
 ### Step 1.1 — Get the project files
 
-**Option A — Download ZIP (no terminal required)**
+**Option A — Direct download (easiest, no account or terminal required)**
 
-1. Go to **https://github.com/Alyssa-Mercado/campus-academic-tech-registry**
-2. Click the green **Code** button
-3. Click **Download ZIP**
-4. Once downloaded, unzip it — you should have a folder called `campus-academic-tech-registry-main`
+Click this link to download the project:
 
-> **Important for the Java Modernization workflow (Parts 3 & 4):** The ZIP download does not include Git history, which means the baseline reset in Step 3.0 will not work. If you plan to do Parts 3 and 4, use Option B instead.
+**https://github.com/Alyssa-Mercado/campus-academic-tech-registry/archive/refs/heads/main.zip**
 
-**Option B — Clone with Git (recommended if doing the full lab)**
+Once downloaded, unzip it — you will have a folder called `campus-academic-tech-registry-main`. No GitHub account needed.
 
-Open a terminal and run:
+> **Note:** This option works for Parts 1, 2, and 5. If you plan to do Parts 3 and 4 (the Java Modernization workflow), use Option B — the workflow requires Git history to reset the baseline.
+
+**Option B — Clone with Git (required for Parts 3 & 4)**
+
+If you have Git installed, open the Bob IDE's built-in terminal (`Terminal → New Terminal`) and run:
 
 ```bash
 git clone https://github.com/Alyssa-Mercado/campus-academic-tech-registry.git
 ```
+
+No GitHub account is required to clone a public repository.
 
 ---
 
