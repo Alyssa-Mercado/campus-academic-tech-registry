@@ -86,13 +86,42 @@ Bob should respond within a few seconds. If you see an error about authenticatio
 
 ## Part 1 — Setup
 
-### Step 1.1 — Clone and build
+### Step 1.1 — Get the project files
+
+**Option A — Download ZIP (no terminal required)**
+
+1. Go to **https://github.com/Alyssa-Mercado/campus-academic-tech-registry**
+2. Click the green **Code** button
+3. Click **Download ZIP**
+4. Once downloaded, unzip it — you should have a folder called `campus-academic-tech-registry-main`
+
+> **Important for the Java Modernization workflow (Parts 3 & 4):** The ZIP download does not include Git history, which means the baseline reset in Step 3.0 will not work. If you plan to do Parts 3 and 4, use Option B instead.
+
+**Option B — Clone with Git (recommended if doing the full lab)**
 
 Open a terminal and run:
 
 ```bash
 git clone https://github.com/Alyssa-Mercado/campus-academic-tech-registry.git
-cd campus-academic-tech-registry
+```
+
+---
+
+### Step 1.2 — Open the project in the Bob IDE
+
+In the Bob IDE:
+
+`File → Open Folder` → select the `campus-academic-tech-registry` (or `campus-academic-tech-registry-main` if you used the ZIP) folder
+
+Wait for Maven to finish importing dependencies (progress bar at the bottom of the IDE).
+
+---
+
+### Step 1.3 — Build the project
+
+In the Bob IDE, open the built-in terminal (`Terminal → New Terminal`) and run:
+
+```bash
 mvn --batch-mode verify
 ```
 
@@ -105,19 +134,9 @@ BUILD SUCCESS
 
 ---
 
-### Step 1.2 — Open the project in the Bob IDE
+### Step 1.4 — Start the application
 
-In the Bob IDE, open the project folder:
-
-`File → Open Folder` → select the `campus-academic-tech-registry` folder
-
-Wait for Maven to finish importing dependencies (progress bar at the bottom of the IDE).
-
----
-
-### Step 1.3 — Start the application
-
-In your terminal:
+In the Bob IDE terminal:
 
 ```bash
 mvn spring-boot:run
