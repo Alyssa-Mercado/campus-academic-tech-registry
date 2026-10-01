@@ -1,8 +1,8 @@
 # Lab Guide — Campus Academic Technology Registry
 
 > **Duration:** ~45 minutes  
-> **Audience:** Developers evaluating IBM Bob  
-> **Prerequisites:** Java 25+, Maven 3, IBM Bob installed in your IDE
+> **Audience:** Developers new to IBM Bob  
+> **Prerequisites:** Java 25+, Maven 3, Git
 
 This lab walks you through two things:
 
@@ -15,6 +15,7 @@ This lab walks you through two things:
 
 | Part | What You Will Do | Time |
 |---|---|---|
+| [Part 0 — Install Bob](#part-0--install-bob) | Install Bob in your IDE and open the chat panel | ~5 min |
 | [Part 1 — Setup](#part-1--setup) | Clone, build, and run the app | ~5 min |
 | [Part 2 — Application Walkthrough](#part-2--application-walkthrough) | Explore every feature of the registry | ~10 min |
 | [Part 3 — Bob Java Modernization Workflow](#part-3--bob-java-modernization-workflow) | Run the automated upgrade from Java 21 → Java 25 | ~15 min |
@@ -23,9 +24,61 @@ This lab walks you through two things:
 
 ---
 
+## Part 0 — Install Bob
+
+### Step 0.1 — Install the Bob extension
+
+Bob works inside **VS Code** or **IntelliJ IDEA**. Pick the IDE you use and follow the install for that one.
+
+**VS Code:**
+1. Open VS Code
+2. Click the **Extensions** icon in the left sidebar (or press `Cmd+Shift+X`)
+3. Search for **IBM Bob**
+4. Click **Install**
+5. When prompted, sign in with your IBM w3id credentials
+
+**IntelliJ IDEA:**
+1. Open IntelliJ
+2. Go to **IntelliJ IDEA → Settings → Plugins**
+3. Search for **IBM Bob**
+4. Click **Install** and restart IntelliJ when prompted
+5. Sign in with your IBM w3id credentials
+
+---
+
+### Step 0.2 — Open the Bob chat panel
+
+**VS Code:**
+- Click the **Bob icon** in the left Activity Bar (it looks like a chat bubble with an IBM logo)
+- Or press `Cmd+Shift+P` and type `Bob: Open Chat`
+
+**IntelliJ:**
+- Click the **Bob panel** tab at the bottom or right side of your IDE window
+- Or go to **View → Tool Windows → Bob**
+
+You should see a chat input box at the bottom of the panel that says something like *"Ask Bob anything..."*. That is where you will type commands throughout this lab.
+
+> **Tip:** Keep the Bob panel open alongside your editor the whole time — you'll be switching between the chat and your code files frequently.
+
+---
+
+### Step 0.3 — Confirm Bob is connected
+
+In the Bob chat panel, type:
+
+```
+Hello
+```
+
+Bob should respond within a few seconds. If you see an error about authentication or connection, make sure you completed the sign-in step in Step 0.1.
+
+---
+
 ## Part 1 — Setup
 
 ### Step 1.1 — Clone and build
+
+Open a terminal and run:
 
 ```bash
 git clone https://github.com/Alyssa-Mercado/campus-academic-tech-registry.git
@@ -33,16 +86,28 @@ cd campus-academic-tech-registry
 mvn --batch-mode verify
 ```
 
-Expected output:
+Expected output (last few lines):
 ```
 BUILD SUCCESS
 ```
 
-> The project ships with an in-memory H2 database. No database setup is required.
+> The project ships with an in-memory H2 database. No external database setup is required.
 
 ---
 
-### Step 1.2 — Start the application
+### Step 1.2 — Open the project in your IDE
+
+**VS Code:** `File → Open Folder` → select the `campus-academic-tech-registry` folder
+
+**IntelliJ:** `File → Open` → select the `campus-academic-tech-registry` folder → click **Trust Project** if prompted
+
+Wait for Maven to finish importing dependencies (progress bar at the bottom of the IDE).
+
+---
+
+### Step 1.3 — Start the application
+
+In your terminal:
 
 ```bash
 mvn spring-boot:run
@@ -51,18 +116,6 @@ mvn spring-boot:run
 The server starts in ~4 seconds. Open **http://localhost:8080** in your browser.
 
 > The database is seeded automatically with **25 assets** and **35 maintenance events** on first start. It resets every time you restart.
-
----
-
-### Step 1.3 — Confirm the baseline Java version
-
-```bash
-mvn help:evaluate -Dexpression=java.version -q -DforceStdout
-```
-
-Expected output: `21`
-
-You will return to this step after the modernization workflow to confirm the upgrade.
 
 ---
 
@@ -148,17 +201,50 @@ The two rules the engine applies:
 
 ## Part 3 — Bob Java Modernization Workflow
 
-> **Before you start this part:** confirm the project is on the pre-modernization baseline — Java 21 / Spring Boot 3.2.5. If you have already run the workflow, see [Resetting the Baseline](#resetting-the-baseline) at the end of this guide.
+### Step 3.0 — Reset to the Java 21 baseline ⚠️ Required
+
+The repo you cloned is already on the **modernized** branch (Java 25 / Spring Boot 3.5.14). You need to reset it to the original Java 21 state so the workflow has something to upgrade.
+
+Stop the running app first (`Ctrl+C` in your terminal), then:
+
+```bash
+git log --oneline
+```
+
+Find the commit labelled **`feat: add campus academic technology registry Spring Boot application`** — it will be the bottom-most entry. Copy its hash (the 7-character code on the left).
+
+Then check out that commit:
+
+```bash
+git checkout <commit-hash>
+```
+
+For example:
+```bash
+git checkout abe11d2
+```
+
+Confirm you are now on the baseline:
+
+```bash
+mvn help:evaluate -Dexpression=project.parent.version -q -DforceStdout
+```
+
+Expected output: `3.2.5`
+
+> You are now in "detached HEAD" state — that is expected. The workflow will make its changes from here.
+
+---
 
 ### Step 3.1 — Trigger the workflow
 
-In the IBM Bob chat panel inside your IDE, type:
+In the **Bob chat panel** in your IDE, type exactly:
 
 ```
 Start the Java Modernization workflow
 ```
 
-Bob launches the workflow and presents three sub-workflow options:
+Bob will respond in the chat panel within a few seconds. You will see a message listing three sub-workflow options:
 
 | Option | Purpose |
 |---|---|
@@ -166,9 +252,9 @@ Bob launches the workflow and presents three sub-workflow options:
 | **Liberty Replatforming** | Migrate from WebSphere to Liberty (requires an AMA zip) |
 | **UI Modernization** | Convert JSF or Struts UI into a React frontend |
 
-Select **Java Upgrade**.
+Click or type **Java Upgrade** to select it.
 
-> From this point the workflow is fully automated. Bob does not ask you to review individual recipe changes or manually resolve errors.
+> From this point the workflow is **fully automated**. Bob will work through each stage on its own — you do not need to review individual changes or fix anything manually. Watch the chat panel for progress updates.
 
 ---
 
@@ -176,38 +262,40 @@ Select **Java Upgrade**.
 
 Bob compiles the project at its current state (Java 21 / Spring Boot 3.2.5) to establish a clean baseline before making any changes.
 
-Expected output:
+**What to watch for in the chat panel:**
 ```
 ✅ Initial build passed — Java 21 / Spring Boot 3.2.5
    No errors. No warnings. Safe to proceed.
 ```
 
-> If the baseline build fails, the workflow stops here and reports the pre-existing error. Fix it before re-triggering.
+> If the build fails here, the workflow stops and tells you what the pre-existing error is. Fix it before re-triggering.
 
 ---
 
 ### Step 3.3 — Stage 2: OpenRewrite Recipes
 
-Bob applies two OpenRewrite recipes automatically:
+Bob applies two OpenRewrite recipes automatically. You will see activity in the chat panel as each recipe runs. You do not need to do anything.
 
 | Recipe | What it does |
 |---|---|
 | `UpgradeSpringBoot_3_5` | Bumps `spring-boot-starter-parent` `3.2.5` → `3.5.14`; sets `java.version` `21` → `25` in `pom.xml` |
 | Jakarta namespace migration | Replaces `javax.persistence.*` with `jakarta.persistence.*` in `Asset.java` and `MaintenanceEvent.java` |
 
-You do not need to do anything — watch the output as Bob applies the recipes.
+You may notice your editor showing file changes as the recipes apply — this is Bob editing your code directly.
 
 ---
 
 ### Step 3.4 — Stage 3: Build Error Detection and Fix
 
-After the recipes run, Bob recompiles the project. For this codebase, **1 error in 1 file** is detected. Bob spawns a focused subagent to diagnose and resolve it automatically.
+After the recipes run, Bob recompiles the project. For this codebase, **1 error in 1 file** is detected. Bob automatically spawns a focused subagent to diagnose and resolve it.
 
-Expected output once the subagent completes:
+**What to watch for in the chat panel:**
 ```
 ✅ Build error resolved — 1 file fixed
    Compilation passing. Proceeding to vulnerability scan.
 ```
+
+> A "subagent" is a separate focused AI agent Bob spins up to handle a specific task. It runs independently and reports back when done. You will see it appear as a separate thread or step in the chat panel.
 
 **Subagent cost:** ~$0.77
 
@@ -215,13 +303,13 @@ Expected output once the subagent completes:
 
 ### Step 3.5 — Stage 4: Vulnerability Scan and Remediation
 
-Bob resolves the full dependency tree (99 JARs) and scans every dependency against the [OSV vulnerability database](https://osv.dev).
+Bob resolves the full dependency tree (99 JARs) and scans every dependency against the [OSV vulnerability database](https://osv.dev). This stage takes the longest — expect 1–3 minutes.
 
 **Result for this project:** 55 vulnerabilities across 8 dependency groups.
 
-A second subagent patches all 55 by injecting BOM property overrides into `pom.xml`.
+A second subagent patches all 55 by injecting version overrides into `pom.xml`. Watch the chat panel — you will see it working through each dependency group.
 
-Expected output:
+**What to watch for:**
 ```
 ✅ Vulnerability remediation complete
    55 CVEs resolved. 0 remaining.
@@ -235,7 +323,7 @@ Expected output:
 
 Bob runs a final `mvn verify` to confirm the fully upgraded, fully patched project compiles and all tests pass.
 
-Expected final output:
+**What to watch for in the chat panel:**
 ```
 ✅ Modernization Complete — Java 25 / Spring Boot 3.5.14
 
@@ -251,13 +339,15 @@ Expected final output:
 **Subagent cost:** ~$0.13  
 **Total workflow cost:** ~$5.11
 
+The workflow is complete. Move on to Part 4 to review every change Bob made.
+
 ---
 
 ## Part 4 — Review the Results
 
 ### Step 4.1 — Inspect `pom.xml`
 
-Open [`pom.xml`](../pom.xml) and locate three areas:
+Open `pom.xml` in your editor and locate three areas:
 
 **a) Parent version bump** (around line 6):
 ```xml
@@ -286,20 +376,20 @@ Open [`pom.xml`](../pom.xml) and locate three areas:
 <assertj.version>3.27.7</assertj.version>
 ```
 
-> These are `<properties>` overrides — Spring Boot's BOM still controls the dependency graph. This is the recommended pattern for patching CVEs without forking the BOM.
+> These are `<properties>` overrides — Spring Boot's BOM still controls the dependency graph. This is the recommended pattern for patching CVEs without replacing the entire BOM.
 
 ---
 
 ### Step 4.2 — Inspect the Jakarta migration
 
-Open [`Asset.java`](../src/main/java/com/university/assettracker/domain/Asset.java) and check the import at line 3:
+Open `src/main/java/com/university/assettracker/domain/Asset.java` and check the import at line 3:
 
 ```java
 // After the workflow
 import jakarta.persistence.*;
 ```
 
-Open [`MaintenanceEvent.java`](../src/main/java/com/university/assettracker/domain/MaintenanceEvent.java) — same change applied.
+Open `MaintenanceEvent.java` in the same folder — the same change was applied there too.
 
 > Spring Boot 3.0 moved from `javax` (Java EE) to `jakarta` (Jakarta EE 10). OpenRewrite applied this change uniformly across every entity in one automated pass.
 
@@ -307,7 +397,7 @@ Open [`MaintenanceEvent.java`](../src/main/java/com/university/assettracker/doma
 
 ### Step 4.3 — Inspect the CI pipeline
 
-Open [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) and find the `setup-java` step:
+Open `.github/workflows/ci.yml` and find the `setup-java` step:
 
 ```yaml
 - name: Set up Java 21
@@ -322,11 +412,11 @@ Open [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) and find the `set
 
 ### Step 4.4 — Confirm application logic is untouched
 
-Open the following files and confirm they are identical to their pre-upgrade state:
+Open the following files and confirm they look like normal, unchanged business logic — no recipe modifications:
 
-- [ ] [`ReplacementService.java`](../src/main/java/com/university/assettracker/service/ReplacementService.java) — business logic unchanged
-- [ ] [`application.properties`](../src/main/resources/application.properties) — no configuration changes
-- [ ] Any Thymeleaf template under `src/main/resources/templates/` — no template changes
+- [ ] `src/main/java/com/university/assettracker/service/ReplacementService.java` — business logic unchanged
+- [ ] `src/main/resources/application.properties` — no configuration changes
+- [ ] Any file under `src/main/resources/templates/` — no template changes
 
 > The workflow is scoped to the **platform layer only** — it never touches application logic.
 
@@ -344,17 +434,23 @@ Open **http://localhost:8080** — the application runs identically to Part 2, n
 
 ## Part 5 — Optional: Manual Modernization Steps
 
-The workflow handles the **required** platform changes. These additional improvements can be applied manually in Agent mode — they are language-level modernizations that are intentionally out of scope for an automated platform upgrade.
+The workflow handles the **required** platform changes automatically. These additional improvements can be applied using Bob in Agent mode — they are language-level modernizations that are intentionally out of scope for the automated platform upgrade.
+
+> **How to use Bob in Agent mode:** Make sure the Bob panel is in **Agent** mode (check the mode selector at the top of the chat panel — it should say "Agent"). Then type the prompt exactly as shown.
+
+---
 
 ### Step 5.1 — Convert `ReplacementRecommendation` to a Java record
 
-`ReplacementRecommendation` is a pure value object (no JPA mapping) — it can become a Java record. Ask Bob in Agent mode:
+`ReplacementRecommendation` is a pure value object (no JPA mapping) — it is a good candidate for a Java record. In the Bob chat panel, type:
 
 ```
 Convert ReplacementRecommendation.java to a Java record using a compact canonical constructor for the defensive copy.
 ```
 
-Expected result — [`ReplacementRecommendation.java`](../src/main/java/com/university/assettracker/domain/ReplacementRecommendation.java):
+Bob will edit the file directly. Review the diff in your editor and accept it.
+
+Expected result in `ReplacementRecommendation.java`:
 ```java
 public record ReplacementRecommendation(Asset asset, List<String> reasons) {
 
@@ -372,13 +468,13 @@ public record ReplacementRecommendation(Asset asset, List<String> reasons) {
 }
 ```
 
-> **Why not `Asset` and `MaintenanceEvent`?** JPA requires a public no-arg constructor and mutable setters for proxy generation. `@Entity` classes cannot be records. The hand-rolled Builder pattern they already have is the correct approach.
+> **Why not `Asset` and `MaintenanceEvent`?** JPA requires a public no-arg constructor and mutable setters for proxy generation. `@Entity` classes cannot be records. The hand-rolled Builder pattern they already have is correct.
 
 ---
 
 ### Step 5.2 — Refactor `ReplacementService` to use `mapMulti`
 
-Ask Bob in Agent mode:
+In the Bob chat panel:
 
 ```
 Refactor ReplacementService.getRecommendations() to use Stream.mapMulti() instead of the forEach + ArrayList pattern.
@@ -390,26 +486,31 @@ This replaces the imperative `forEach` + mutable `ArrayList` approach with a fun
 
 ### Step 5.3 — Enable virtual threads
 
-In [`application.properties`](../src/main/resources/application.properties), add:
+Add one line to `src/main/resources/application.properties`. You can ask Bob:
 
+```
+Enable virtual threads in application.properties
+```
+
+Or add it manually:
 ```properties
 # Java 25 / Spring Boot 3.2+ — virtual threads on Tomcat
 spring.threads.virtual.enabled=true
 ```
 
-Virtual threads (JEP 505, finalized in Java 25) allow Tomcat to handle each request on a lightweight virtual thread rather than a platform thread — improving throughput under concurrent load with no code changes required.
+Virtual threads (finalized in Java 25) allow Tomcat to handle each request on a lightweight virtual thread rather than a platform thread — improving throughput under load with no code changes required.
 
 ---
 
 ### Step 5.4 — Replace `Arrays.asList()` with `List.of()`
 
-Ask Bob in Agent mode:
+In the Bob chat panel:
 
 ```
 Replace Arrays.asList(AssetType.values()) and Arrays.asList(MaintenanceStatus...) with List.of() in AssetController and MaintenanceController, and remove the unused Arrays import.
 ```
 
-`List.of()` (Java 9+) returns a truly immutable list and is the idiomatic modern alternative to `Arrays.asList()`.
+`List.of()` (Java 9+) returns a truly immutable list and is the idiomatic modern replacement for `Arrays.asList()`.
 
 ---
 
@@ -428,30 +529,6 @@ Replace Arrays.asList(AssetType.values()) and Arrays.asList(MaintenanceStatus...
 | PostgreSQL driver | BOM default | **42.7.12** (CVE-patched) |
 | CI Java version | 21 | **25 (Temurin)** |
 | Known vulnerabilities | 55 | **0** |
-
----
-
-## Resetting the Baseline
-
-If you want to re-run the workflow from scratch, reset to the pre-modernization commit:
-
-```bash
-git log --oneline
-# Find the commit: "feat: add campus academic technology registry Spring Boot application"
-git checkout <commit-hash>
-```
-
-Or stash current changes if the working tree is clean:
-
-```bash
-git stash
-```
-
-Then confirm the baseline builds on Java 21:
-
-```bash
-mvn --batch-mode verify
-```
 
 ---
 
