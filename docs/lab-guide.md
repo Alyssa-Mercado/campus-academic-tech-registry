@@ -1,13 +1,50 @@
 # Lab Guide — Campus Academic Technology Registry
 
-> **Duration:** ~45 minutes  
-> **Audience:** Developers new to IBM Bob  
-> **Prerequisites:** Java 25+, Maven 3, Git
+> **Duration:** ~45 minutes
+> **Audience:** Developers new to IBM Bob
 
 This lab walks you through two things:
 
 1. **Running the application** — exploring the asset registry, maintenance tracker, and replacement recommendation engine.
 2. **Running IBM Bob's Java Modernization workflow** — upgrading the project from Java 21 / Spring Boot 3.2.5 to Java 25 / Spring Boot 3.5.x with zero manual effort.
+
+---
+
+## Prerequisites
+
+Before starting, make sure you have the following installed on your machine.
+
+### Required for all parts
+
+| Prerequisite | Why | Download |
+|---|---|---|
+| **IBM Bob IDE** | The IDE you will use throughout this lab | https://ibm.com/bob |
+| **Java 25+** | Required to build and run the application | https://adoptium.net (select Java 25, Temurin distribution) |
+| **Maven 3** | Required to build the project | https://maven.apache.org/download.cgi |
+
+### Required only for Parts 3 & 4 (Java Modernization workflow)
+
+| Prerequisite | Why | Download |
+|---|---|---|
+| **Git** | Required to clone the repo and reset to the Java 21 baseline | https://git-scm.com/downloads |
+| **IBM Bob Premium Package for Java** | Provides the Java Modernization workflow | Contact your Bob administrator |
+
+### How to verify your setup
+
+Open the Bob IDE's built-in terminal (`Terminal → New Terminal`) and run:
+
+```bash
+java -version
+mvn -version
+```
+
+Expected output:
+```
+openjdk version "25" ...
+Apache Maven 3.x.x ...
+```
+
+If either command is not found, install it from the links above before continuing.
 
 ---
 
