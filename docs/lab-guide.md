@@ -37,7 +37,22 @@ Once installed:
 
 ---
 
-### Step 0.2 — Open the Bob chat panel
+### Step 0.2 — Confirm the Java Premium Package is installed
+
+This lab uses the **Java Modernization workflow**, which is part of the **IBM Bob Premium Package for Java**. You need this package installed before the workflow will appear.
+
+To check:
+1. In the Bob chat panel, type:
+   ```
+   What workflows do I have available?
+   ```
+2. Confirm **Java Modernization** appears in the list.
+
+If it does not appear, contact your Bob administrator to have the **Premium Package for Java** added to your account before continuing.
+
+---
+
+### Step 0.3 — Open the Bob chat panel
 
 The Bob chat panel is the primary way you interact with Bob throughout this lab.
 
@@ -50,7 +65,7 @@ You should see a chat input box that says something like *"Ask Bob anything..."*
 
 ---
 
-### Step 0.3 — Confirm Bob is connected
+### Step 0.4 — Confirm Bob is connected
 
 In the Bob chat panel, type:
 
@@ -58,7 +73,7 @@ In the Bob chat panel, type:
 Hello
 ```
 
-Bob should respond within a few seconds. If you see an error about authentication or connection, make sure you completed sign-in in Step 0.1.
+Bob should respond within a few seconds. If you see an error about authentication or connection, make sure you completed sign-in in Step 0.1 and the package check in Step 0.2.
 
 ---
 
