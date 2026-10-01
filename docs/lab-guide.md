@@ -37,18 +37,25 @@ Once installed:
 
 ---
 
-### Step 0.2 — Confirm the Java Premium Package is installed
+### Step 0.2 — Check which parts of the lab apply to you
 
-This lab uses the **Java Modernization workflow**, which is part of the **IBM Bob Premium Package for Java**. You need this package installed before the workflow will appear.
+This lab has two tracks depending on whether you have the **IBM Bob Premium Package for Java** installed.
 
-To check:
-1. In the Bob chat panel, type:
-   ```
-   What workflows do I have available?
-   ```
-2. Confirm **Java Modernization** appears in the list.
+To check, type in the Bob chat panel:
+```
+What workflows do I have available?
+```
 
-If it does not appear, contact your Bob administrator to have the **Premium Package for Java** added to your account before continuing.
+**Java Modernization appears in the list → Full lab**
+You have the Premium Package. Follow all parts (0 → 1 → 2 → 3 → 4 → 5).
+
+**Java Modernization does NOT appear → Partial lab**
+You do not have the Premium Package installed. You can still complete:
+- **Part 1** — Clone and run the application
+- **Part 2** — Full application walkthrough
+- **Part 5** — Optional manual modernization steps using Bob in Agent mode (no Premium Package required)
+
+Skip Parts 3 and 4 entirely. To get the Premium Package, contact your Bob administrator.
 
 ---
 
